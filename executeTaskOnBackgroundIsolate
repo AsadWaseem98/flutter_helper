@@ -1,0 +1,34 @@
+
+void executeTaskOnBackgroundIsolate(
+    Future<void> Function() taskToPerformOnBgIsolate) {
+  // Get the instance of the root isolate token.
+  RootIsolateToken rootIsolateToken = RootIsolateToken.instance!;
+
+  // Spawn a new isolate to execute the task.
+  Isolate.spawn((args) async {
+    // Register the background isolate with the root isolate.
+    BackgroundIsolateBinaryMessenger.ensureInitialized(
+        args[0] as RootIsolateToken);
+
+    try {
+      // Perform the task on the background isolate.
+      await (args[1] as Function)();
+    } catch (e) {
+      debugPrint(
+          'An error occurred in the function: executeTaskOnBackgroundIsolate. Error details: ${e.toString()}');
+    } finally {
+      // Exit the background isolate gracefully.
+      Isolate.exit();
+    }
+  }, [rootIsolateToken, taskToPerformOnBgIsolate]);
+}
+
+
+//EXAMPLE 
+
+executeTaskOnBackgroundIsolate(() async {
+                              final val =
+                                  (await (await SharedPreferences.getInstance())
+                                      .setString('name', 'M Asad Waseem'));
+                              debugPrint("Result is : $val");
+                            });
